@@ -10,6 +10,9 @@ from selenium.common.exceptions import ElementClickInterceptedException
 from selenium.common.exceptions import TimeoutException
 import json
 import os
+import schedule
+import time
+from datetime import datetime
 
 ### checkshowtime() - add exception if throws cant find aria label
 ### checkshowtime() - add hard check to see if seats have rendered rather than sleeping 1
@@ -43,6 +46,7 @@ filterList = data["filters"]
 movieDates = data["dates"]
 showtimeIDs = []
 availableShowtimes = []
+availableJSON = []
 
 ## Claude code
 def safeClick(element):
@@ -53,6 +57,8 @@ def safeClick(element):
         driver.execute_script("arguments[0].click();", element)
 
 def writeToAvail():
+    global availableJSON
+    availableJSON.append(datetime.now().strftime("%H:%M:%S"))
     with open(os.path.join(script_dir, "available.json"), "w") as writeFile:
         json.dump(availableJSON, writeFile)
 
@@ -218,7 +224,7 @@ filterList = ["IMAX 70mm"]
 
 
 
-
+#def run():
 if driver.session_id is not None:
     start()
     insertMovie(movieTitle)
@@ -230,16 +236,21 @@ if driver.session_id is not None:
             insertTheatre(theatres[theatre], theatre)
             showtimeIDs = scrapeShowtimeIDs()
             print(showtimeIDs)
-        if len(showtimeIDs) == 0:
-            availableJSON = ["No showtime exists for "+movieTitle, "Hang on tight! Hopefully more showtimes will arrive for " +movieTitle+"."]
-            driver.quit()
-            writeToAvail()
-        else:
-            for showtime in showtimeIDs:
-                print(f"\n\n{theatres[theatre]}")
-                checkShowtime(theatre, showtime)
+            if len(showtimeIDs) == 0:
+                availableJSON = ["No showtime exists for "+movieTitle, "Hang on tight! Hopefully more showtimes will arrive for " +movieTitle+"."]
+                driver.quit()
+                writeToAvail()
+            else:
+                for showtime in showtimeIDs:
+                    print(f"\n\n{theatres[theatre]}")
+                    checkShowtime(theatre, showtime)
     if len(availableShowtimes) == 0:
         availableJSON = ["No available seats for "+movieTitle, "Hang on tight! Hopefully more seats will arrive for " +movieTitle+"."]
     else:
         availableJSON = ["There are " + str(len(availableShowtimes))+ " available seats for " + movieTitle, availableShowtimes]
     writeToAvail()
+
+'''schedule.every(5).seconds.do(run)
+while True:
+    schedule.run_pending()
+    time.sleep(1)'''
