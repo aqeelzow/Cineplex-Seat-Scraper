@@ -13,6 +13,8 @@ import os
 import schedule
 import time
 from datetime import datetime
+from dotenv import load_dotenv
+from emailSend import readInfo, sendEmail
 
 ### checkshowtime() - add exception if throws cant find aria label
 ### checkshowtime() - add hard check to see if seats have rendered rather than sleeping 1
@@ -32,6 +34,7 @@ seatTypes = ["Wheelchair", "Standard", "Companion", "D-BOX*" ]
 
 # Initialize the driver
 driver = webdriver.Chrome()
+load_dotenv()
 script_dir = os.path.dirname(os.path.abspath(__file__))
 wait = WebDriverWait(driver, 20)
 with open(os.path.join(script_dir, "form_data.json"), "r") as openFile:
@@ -40,6 +43,7 @@ with open(os.path.join(script_dir, "form_data.json"), "r") as openFile:
 excludeType = ["Wheelchair", "Companion"]
 excludeSeat = ["A", "B", "C"]
 movieTitle = "The Odyssey"
+showFailure = False
 
 movieTheatres = data["theatre_id"]
 filterList = data["filters"]
@@ -47,6 +51,7 @@ movieDates = data["dates"]
 showtimeIDs = []
 availableShowtimes = []
 availableJSON = []
+
 
 ## Claude code
 def safeClick(element):
@@ -56,22 +61,40 @@ def safeClick(element):
     except ElementClickInterceptedException:
         driver.execute_script("arguments[0].click();", element)
 
-def writeToAvail():
-    global availableJSON
+def writeToAvail(success):
+    global availableJSON, showFailure
     availableJSON.append(datetime.now().strftime("%H:%M:%S"))
     with open(os.path.join(script_dir, "available.json"), "w") as writeFile:
         json.dump(availableJSON, writeFile)
+    if showFailure and not success or success:
+        processAndSendEmail()
 
+def processAndSendEmail():
+    info = readInfo()
+    sendEmail("realdynedl@gmail.com", ["realdynedl@gmail.com"], info[1], info[0], os.getenv("GOOGLEPASS"))
 
 def quit(subject, bodyText):
     global availableJSON
     availableJSON = [subject, bodyText]
     driver.quit()
-    writeToAvail()
+    writeToAvail(False)
 def start():
     driver.get("https://www.cineplex.com/?openTM=true")
-    wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "#onetrust-accept-btn-handler")))
-    safeClick(driver.find_element(By.CSS_SELECTOR, "#onetrust-accept-btn-handler"))
+    try:
+        wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "#onetrust-accept-btn-handler")))
+        safeClick(driver.find_element(By.CSS_SELECTOR, "#onetrust-accept-btn-handler"))
+    except TimeoutException:
+        pass
+        print("passing timeout exception")
+    ''' if the random pop up shows up where it doesnt work
+    try:
+        elements = driver.find_elements(By.CSS_SELECTOR, "#onetrust-accept-btn-handler")
+        if len(elements) > 0:
+            driver.refresh()
+    except TimeoutException:
+        pass
+        print("passing timeout exception")  
+    '''
 def insertMovie(movieTitle):
     buttons = wait.until(EC.presence_of_all_elements_located((By.CSS_SELECTOR, ".TicketModuleButton_button__gOEtJ"))) #buttons
     for button in buttons:
@@ -216,41 +239,46 @@ def checkShowtime(theatreID, showtimeID):
     driver.close()
     driver.switch_to.window(main_tab)
 
-"""
-movieDates = ["July 16, 2026", "July 17, 2026", "July 18, 2026"]
-movieTheatres = [7408, 7420]
-filterList = ["IMAX 70mm"]
-"""
 
+def reset():
+    closeTab = driver.current_window_handle
+    driver.switch_to.new_window('tab')
+    driver.get("https://www.cineplex.com/?openTM=true")
+    mainTab = driver.current_window_handle
+    driver.switch_to.window(closeTab)
+    driver.close()
+    driver.switch_to.window(mainTab)
 
+def run():
+    global availableJSON
+    if driver.session_id is not None:
+        start()
+        insertMovie(movieTitle)
+        if len(filterList) != 0:
+            filters()
+        for date in movieDates:
+            insertDate(date)
+            for theatre in movieTheatres:
+                insertTheatre(theatres[theatre], theatre)
+                showtimeIDs = scrapeShowtimeIDs()
+                print(showtimeIDs)
+                if len(showtimeIDs) == 0:
+                    availableJSON = ["No showtime exists for "+movieTitle, "Hang on tight! Hopefully more showtimes will arrive for " +movieTitle+"."]
+                    driver.quit()
+                    writeToAvail(False)
+                else:
+                    for showtime in showtimeIDs:
+                        print(f"\n\n{theatres[theatre]}")
+                        checkShowtime(theatre, showtime)
+        if len(availableShowtimes) == 0:
+            availableJSON = ["No available seats for "+movieTitle, "Hang on tight! Hopefully more seats will arrive for " +movieTitle+"."]
+            writeToAvail(False)
+        else:
+            availableJSON = ["There are " + str(len(availableShowtimes))+ " available seats for " + movieTitle, availableShowtimes]
+            writeToAvail(True)
+        reset()
 
-#def run():
-if driver.session_id is not None:
-    start()
-    insertMovie(movieTitle)
-    if len(filterList) != 0:
-        filters()
-    for date in movieDates:
-        insertDate(date)
-        for theatre in movieTheatres:
-            insertTheatre(theatres[theatre], theatre)
-            showtimeIDs = scrapeShowtimeIDs()
-            print(showtimeIDs)
-            if len(showtimeIDs) == 0:
-                availableJSON = ["No showtime exists for "+movieTitle, "Hang on tight! Hopefully more showtimes will arrive for " +movieTitle+"."]
-                driver.quit()
-                writeToAvail()
-            else:
-                for showtime in showtimeIDs:
-                    print(f"\n\n{theatres[theatre]}")
-                    checkShowtime(theatre, showtime)
-    if len(availableShowtimes) == 0:
-        availableJSON = ["No available seats for "+movieTitle, "Hang on tight! Hopefully more seats will arrive for " +movieTitle+"."]
-    else:
-        availableJSON = ["There are " + str(len(availableShowtimes))+ " available seats for " + movieTitle, availableShowtimes]
-    writeToAvail()
-
-'''schedule.every(5).seconds.do(run)
+schedule.every(5).seconds.do(run)
 while True:
     schedule.run_pending()
-    time.sleep(1)'''
+    time.sleep(1)
