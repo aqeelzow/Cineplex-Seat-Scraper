@@ -7,8 +7,12 @@ script_dir = os.path.dirname(os.path.abspath(__file__))
 passwrd = os.getenv("appPass")
 
 with open(os.path.join(script_dir, "available.json"), "r") as readFile:
-    data = "\n".join(json.load(readFile))
-
+    data = json.load(readFile)
+if type(data[1]) == list:
+    showtimeList = "\n".join(data[1])
+else:
+    showtimeList = (data[1])
+showtimeSubject = data[0]
 print(data)
 
 def sendEmail(sender, recipients, subject, text):
@@ -20,4 +24,4 @@ def sendEmail(sender, recipients, subject, text):
         smtpServ.login(sender, passwrd)
         smtpServ.sendmail(sender, recipients, str(msg))
 
-sendEmail("realdynedl@gmail.com", ["realdynedl@gmail.com"], "available", data)
+sendEmail("realdynedl@gmail.com", ["realdynedl@gmail.com"], showtimeSubject, showtimeList)
