@@ -236,8 +236,8 @@ if driver.session_id is not None:
             writeToAvail()
         else:
             for showtime in showtimeIDs:
-                    print(f"\n\n{theatres[theatre]}")
-                    checkShowtime(theatre, showtime)
+                print(f"\n\n{theatres[theatre]}")
+                checkShowtime(theatre, showtime)
     if len(availableShowtimes) == 0:
         availableJSON = ["No available seats for "+movieTitle, "Hang on tight! Hopefully more seats will arrive for " +movieTitle+"."]
     else:
