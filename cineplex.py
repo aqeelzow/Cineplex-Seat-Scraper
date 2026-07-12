@@ -8,6 +8,7 @@ import time
 from selenium.common.exceptions import StaleElementReferenceException
 from selenium.common.exceptions import ElementClickInterceptedException
 import json
+import os
 
 ### checkshowtime() - add exception if throws cant find aria label
 ### checkshowtime() - add hard check to see if seats have rendered rather than sleeping 1
@@ -20,6 +21,14 @@ theatres = {
 }
 
 seatTypes = ["Wheelchair", "Standard", "Companion", "D-BOX*" ]
+
+
+
+# Initialize the driver
+driver = webdriver.Chrome()
+script_dir = os.path.dirname(os.path.abspath(__file__))
+wait = WebDriverWait(driver, 20)
+showtimeIDs = []
 ## Claude code
 def safeClick(element):
     driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", element)
@@ -28,10 +37,6 @@ def safeClick(element):
     except ElementClickInterceptedException:
         driver.execute_script("arguments[0].click();", element)
 
-# Initialize the driver
-driver = webdriver.Chrome()
-wait = WebDriverWait(driver, 20)
-showtimeIDs = []
 def start():
     driver.get("https://www.cineplex.com/?openTM=true")
     wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "#onetrust-accept-btn-handler")))
@@ -124,7 +129,6 @@ def checkShowtime(theatreID, showtimeID):
     driver.switch_to.new_window('tab')
     url = f"https://www.cineplex.com/ticketing/preview?theatreId={theatreID}&showtimeId={showtimeID}&dbox=false"
     driver.get(url)
-    wait = WebDriverWait(driver, 20)
 
     # Locate a single element
     wait.until(EC.presence_of_all_elements_located((By.CSS_SELECTOR, "[class*='seat-'] > g.SeatElement_seatLinkButton__wxQzX")))
@@ -155,25 +159,26 @@ def checkShowtime(theatreID, showtimeID):
     driver.close()
     driver.switch_to.window(main_tab)
 
-movieTitle = "The Odyssey"
 """
 movieDates = ["July 16, 2026", "July 17, 2026", "July 18, 2026"]
 movieTheatres = [7408, 7420]
 filterList = ["IMAX 70mm"]
 """
-with open(r"C:\Users\DarkD\CLionProjects\cineplex scraper\form_data.json") as f:
-    data = json.load(f)
+
+
+with open(os.path.join(script_dir, "form_data.json"), "r") as openFile:
+    data = json.load(openFile)
 
 availableShowtimes = []
 excludeType = ["Wheelchair", "Companion"]
 excludeSeat = ["A", "B", "C"]
+movieTitle = "The Odyssey"
 movieTheatres = data["theatre_id"]
 filterList = data["filters"]
 movieDates = data["dates"]
 
 start()
 insertMovie(movieTitle)
-#insertTheatre(movieTheatre, theatreID)
 filters()
 for date in movieDates:
     insertDate(date)
@@ -185,5 +190,5 @@ for date in movieDates:
         for showtime in showtimeIDs:
             print(f"\n\n{theatres[theatre]}")
             checkShowtime(theatre, showtime)
-
-print(availableShowtimes)
+with open(os.path.join(script_dir, "available.json"), "w") as writeFile:
+    json.dump(availableShowtimes, writeFile)
