@@ -1,10 +1,7 @@
 from selenium import webdriver
-from selenium.webdriver import Keys
-from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-import time
 from selenium.common.exceptions import StaleElementReferenceException
 from selenium.common.exceptions import ElementClickInterceptedException
 from selenium.common.exceptions import TimeoutException
@@ -19,17 +16,6 @@ from urllib3.exceptions import MaxRetryError
 from selenium.webdriver.chrome.options import Options
 
 
-
-
-### scrapeShowtime() - remove 3 second wait
-### checkshowtime() - add hard check to see if seats have rendered rather than sleeping 1
-### fix if other piece shows up
-## checkshowtime() - add exception if throws cant find aria label
-## can't filter out 4DX & VIP Seats
-## rather than quit after one wrong date/theatre, make it so that it skips.
-## if none of the filters exist, click x instead of quitting
-## disable chrome opening up.
-## change it so that driver.quit keeps the program running (maybe on cooldown?)
 
 # theatre id: name
 theatres = {
@@ -82,11 +68,13 @@ def writeToAvail(success):
         processAndSendEmail()
 
 def processAndSendEmail():
+    global availableShowtimes
     info = readInfo()
     sendEmail("realdynedl@gmail.com", ["realdynedl@gmail.com"], info[1], info[0], os.getenv("GOOGLEPASS"))
+    availableShowtimes = []
 
 def regularEmail():
-    sendEmail("realdynedl@gmail.com", ["realdynedl@gmail.com"], "Working: "+ datetime.now().strftime("%H:%M:%S"), "As of "+datetime.now().strftime("%H:%M:%S") + " the program is working on: "+movieTitle + " at "+", ".join(str(t) for t in movieTheatres) + " for " +", ".join(movieDates), os.getenv("GOOGLEPASS"))
+    sendEmail("realdynedl@gmail.com", ["realdynedl@gmail.com"], "Working: "+ datetime.now().strftime("%H:%M:%S"), "As of "+datetime.now().strftime("%B %d, %Y")+" at "+datetime.now().strftime("%H:%M:%S") + " the program is working on: "+movieTitle + " at "+", ".join(str(t) for t in movieTheatres) + " for " +", ".join(movieDates), os.getenv("GOOGLEPASS"))
     print("regular email sent")
 
 def quit(subject, bodyText):
@@ -123,7 +111,7 @@ def insertMovie(movieTitle):
     found = False
     for movie in movieTitles:
         if movieTitle in movie.text:
-            print("\nsuccess")
+            print("\nmovie title found")
             wait.until(EC.element_to_be_clickable(movie))
             safeClick(movie)
             found = True
@@ -142,7 +130,7 @@ def insertDate(movieDate):
     found = False
     for date in movieDates:
         if movieDate in date.text:
-            print("\nsuccess")
+            print("\nmovie date found")
             wait.until(EC.element_to_be_clickable(date))
             safeClick(date)
             found = True
@@ -170,7 +158,7 @@ def insertTheatre(movieTheatre, theatreID):
         if movieTheatre in theatre.text:
             wait.until(EC.element_to_be_clickable(theatre))
             safeClick(theatre)
-            print("\nsuccess")
+            print("\nmovie theatre found")
             found = True
             break
     if not found:
@@ -193,7 +181,7 @@ def filters():
             if filt == myfilter.text:
                 wait.until(EC.element_to_be_clickable(myfilter))
                 safeClick(myfilter)
-                print("\nsuccess")
+                print("\nmovie filters found")
                 found = True
                 foundOne = True
                 break
@@ -217,11 +205,11 @@ def scrapeShowtimeIDs():
         ids.append(showIDfix)
     return ids
 ## Claude code
-def wait_for_seat_availability(min_calls, quiet_period, timeout):
+def waitForSeatAvailability(minCalls, quietPeriod, timeout):
     global driver
-    seen_ids = set()
-    finished_ids = set()
-    last_activity = time.time()
+    seenIDs = set()
+    finishedIDs = set()
+    lastActivity = time.time()
     startTime = time.time()
 
     while time.time() - startTime < timeout:
@@ -237,15 +225,15 @@ def wait_for_seat_availability(min_calls, quiet_period, timeout):
             if method == "Network.responseReceived":
                 url = params.get("response", {}).get("url", "")
                 if "seat-availability" in url:
-                    seen_ids.add(params["requestId"])
-                    last_activity = time.time()
+                    seenIDs.add(params["requestId"])
+                    lastActivity = time.time()
 
             elif method == "Network.loadingFinished":
-                if params.get("requestId") in seen_ids:
-                    finished_ids.add(params["requestId"])
-                    last_activity = time.time()
+                if params.get("requestId") in seenIDs:
+                    finishedIDs.add(params["requestId"])
+                    lastActivity = time.time()
 
-        if len(finished_ids) >= min_calls and (time.time() - last_activity) > quiet_period:
+        if len(finishedIDs) >= minCalls and (time.time() - lastActivity) > quietPeriod:
             return True
 
         time.sleep(0.1)
@@ -261,7 +249,7 @@ def checkShowtime(theatreID, showtimeID):
     # Locate a single element
     wait.until(EC.presence_of_all_elements_located((By.CSS_SELECTOR, "[class*='seat-'] > g.SeatElement_seatLinkButton__wxQzX")))
     #time.sleep(1)
-    childElements = driver.find_elements(By.CSS_SELECTOR, "[class*='seat-'] > g.SeatElement_seatLinkButton__wxQzX")
+    #childElements = driver.find_elements(By.CSS_SELECTOR, "[class*='seat-'] > g.SeatElement_seatLinkButton__wxQzX")
     #allAvailable = True
     runDueToSeatMap = False
     '''shortWait = WebDriverWait(driver, 1)
@@ -284,7 +272,7 @@ def checkShowtime(theatreID, showtimeID):
         runDueToSeatMap = True
 
     #if "1320 " not in renderedSeatMap.get_attribute("viewBox"):'''
-    got_data = wait_for_seat_availability(min_calls=1, quiet_period=0.6, timeout=8)
+    got_data = waitForSeatAvailability(2, 0.6, 8)
     if not got_data:
         print("Never saw seat-availability response — falling back to sleep")
         time.sleep(2)
@@ -292,9 +280,9 @@ def checkShowtime(theatreID, showtimeID):
         # tiny buffer for React to re-render aria-labels after the fetch resolves
         time.sleep(0.15)
         runDueToSeatMap = True
-
+    childElements = driver.find_elements(By.CSS_SELECTOR, "[class*='seat-'] > g.SeatElement_seatLinkButton__wxQzX")
     if runDueToSeatMap:
-        childElements = driver.find_elements(By.CSS_SELECTOR, "[class*='seat-'] > g.SeatElement_seatLinkButton__wxQzX")
+
         for element in childElements:
             exclude = False
 
@@ -317,6 +305,7 @@ def checkShowtime(theatreID, showtimeID):
                             exclude = True
                     if not exclude:
                         availableShowtimes.append(url + ":" + str(element.get_attribute("aria-label")))
+                        print("added to availables")
                 '''else:
                     availableJSON = ["No seats were found.", "That's odd, we couldn't find any seats."]
                     driver.quit()
@@ -347,6 +336,7 @@ def run():
             wait = WebDriverWait(driver, 20)
             driverAlive = True
         start()
+
         insertMovie(movieTitle)
         if len(filterList) != 0:
             filters()
