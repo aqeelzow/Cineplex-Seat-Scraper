@@ -304,7 +304,9 @@ def checkShowtime(theatreID, showtimeID):
                         if seatEx.casefold() in status.casefold():
                             exclude = True
                     if not exclude:
-                        availableShowtimes.append(url + ":" + str(element.get_attribute("aria-label")))
+                        showtimeTime = driver.find_element(By.CSS_SELECTOR, ".MovieDetailsBlock_movieDateTime__WIyZX").text
+                        showtimeTime = showtimeTime.replace("\n・\n", " - ")
+                        availableShowtimes.append(showtimeTime + ": " + str(element.get_attribute("aria-label")) + " at " + theatres[theatreID] + " - " + url )
                         print("added to availables")
                 '''else:
                     availableJSON = ["No seats were found.", "That's odd, we couldn't find any seats."]
