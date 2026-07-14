@@ -359,6 +359,9 @@ def run():
         if len(availableShowtimes) == 0:
             availableJSON = ["No available seats for "+movieTitle, "Hang on tight! Hopefully more seats will arrive for " +movieTitle+"."]
             writeToAvail(False)
+        elif len(availableShowtimes) == 1:
+            availableJSON = ["There is 1 available seat for " + movieTitle, availableShowtimes]
+            writeToAvail(True)
         else:
             availableJSON = ["There are " + str(len(availableShowtimes))+ " available seats for " + movieTitle, availableShowtimes]
             writeToAvail(True)
