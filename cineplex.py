@@ -14,7 +14,7 @@ from dotenv import load_dotenv
 from emailSend import readInfo, sendEmail
 from urllib3.exceptions import MaxRetryError
 from selenium.webdriver.chrome.options import Options
-
+import threading
 
 
 # theatre id: name
@@ -70,11 +70,14 @@ def writeToAvail(success):
 def processAndSendEmail():
     global availableShowtimes
     info = readInfo()
+    #sendEmail("realdynedl@gmail.com", ["falltureofficial@gmail.com", "sircody0101@gmail.com"], info[1], info[0], os.getenv("GOOGLEPASS"))
     sendEmail("realdynedl@gmail.com", ["realdynedl@gmail.com"], info[1], info[0], os.getenv("GOOGLEPASS"))
+    #sendEmail("darkdragon7511@gmail.com", ["realdynedl@gmail.com"], info[1], info[0], os.getenv("GOOGLEPASS"))
     availableShowtimes = []
 
 def regularEmail():
     sendEmail("realdynedl@gmail.com", ["realdynedl@gmail.com"], "Working: "+ datetime.now().strftime("%H:%M:%S"), "As of "+datetime.now().strftime("%B %d, %Y")+" at "+datetime.now().strftime("%H:%M:%S") + " the program is working on: "+movieTitle + " at "+", ".join(str(t) for t in movieTheatres) + " for " +", ".join(movieDates), os.getenv("GOOGLEPASS"))
+    #sendEmail("darkdragon7511@gmail.com", ["realdynedl@gmail.com"], "Working: "+ datetime.now().strftime("%H:%M:%S"), "As of "+datetime.now().strftime("%B %d, %Y")+" at "+datetime.now().strftime("%H:%M:%S") + " the program is working on: "+movieTitle + " at "+", ".join(str(t) for t in movieTheatres) + " for " +", ".join(movieDates), os.getenv("GOOGLEPASS"))
     print("regular email sent")
 
 def quit(subject, bodyText):
@@ -306,7 +309,7 @@ def checkShowtime(theatreID, showtimeID):
                     if not exclude:
                         showtimeTime = driver.find_element(By.CSS_SELECTOR, ".MovieDetailsBlock_movieDateTime__WIyZX").text
                         showtimeTime = showtimeTime.replace("\n・\n", " - ")
-                        availableShowtimes.append(showtimeTime + ": " + str(element.get_attribute("aria-label")) + " at " + theatres[theatreID] + " - " + url )
+                        availableShowtimes.append(showtimeTime + ": " + str(element.get_attribute("aria-label")) + " at " + theatres[theatreID] + " - " + url+"\n")
                         print("added to availables")
                 '''else:
                     availableJSON = ["No seats were found.", "That's odd, we couldn't find any seats."]
@@ -329,8 +332,12 @@ def reset():
     driver.close()
     driver.switch_to.window(mainTab)
 driverAlive = True
+run_lock = threading.Lock()
 def run():
     global availableJSON, wait, driverAlive, driver
+    if not run_lock.acquire(blocking=False):
+        print("Previous run still in progress, skipping this cycle")
+        return
     try:
         if not driverAlive:
             #driver = webdriver.Chrome()
@@ -371,6 +378,9 @@ def run():
 
     except MaxRetryError as e:
         print(f"Max retry error during run(): {e}")
+
+    finally:
+        run_lock.release()
 
 
 schedule.every(5).seconds.do(run)
