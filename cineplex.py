@@ -20,7 +20,8 @@ import threading
 # theatre id: name
 theatres = {
     7408: "Cineplex Cinemas Vaughan",
-    7420: "Cineplex Cinemas Mississauga Square One"
+    7420: "Cineplex Cinemas Mississauga Square One",
+    7428: "Scotiabank Theatre Ottawa"
 }
 
 seatTypes = ["Wheelchair", "Standard", "Companion", "D-BOX*" ]
@@ -39,7 +40,16 @@ with open(os.path.join(script_dir, "form_data.json"), "r") as openFile:
     data = json.load(openFile)
 
 excludeType = ["Wheelchair", "Companion"]
-excludeSeat = ["A", "B", "C"]
+excludeSeat = ["AA", "BB", "CC", "DD", "EE", "A", "B", "C", "D", "E"]
+exclSeat = ["F", "G", "H", "I", "J"]
+times = []
+excludeTimes = ["11:00 AM", "2:30 PM", "10:30 PM"]
+specExcludeSeat = []
+for i in range(1, 9):
+    for seat in exclSeat:
+        specExcludeSeat.append(seat+str(36-i))
+        specExcludeSeat.append(seat+str(i))
+print(excludeSeat)
 movieTitle = "The Odyssey"
 showFailure = False
 
@@ -76,7 +86,8 @@ def processAndSendEmail():
     availableShowtimes = []
 
 def regularEmail():
-    sendEmail("realdynedl@gmail.com", ["realdynedl@gmail.com"], "Working: "+ datetime.now().strftime("%H:%M:%S"), "As of "+datetime.now().strftime("%B %d, %Y")+" at "+datetime.now().strftime("%H:%M:%S") + " the program is working on: "+movieTitle + " at "+", ".join(str(t) for t in movieTheatres) + " for " +", ".join(movieDates), os.getenv("GOOGLEPASS"))
+    info = readInfo()
+    sendEmail("realdynedl@gmail.com", ["realdynedl@gmail.com"], "Working: "+ datetime.now().strftime("%H:%M:%S"), "As of "+datetime.now().strftime("%B %d, %Y")+" at "+datetime.now().strftime("%H:%M:%S") + " the program is working on: "+movieTitle + " at "+", ".join(str(t) for t in movieTheatres) + " for " +", ".join(movieDates)+"\n\n"+info[0]+"\n"+info[1], os.getenv("GOOGLEPASS"))
     #sendEmail("darkdragon7511@gmail.com", ["realdynedl@gmail.com"], "Working: "+ datetime.now().strftime("%H:%M:%S"), "As of "+datetime.now().strftime("%B %d, %Y")+" at "+datetime.now().strftime("%H:%M:%S") + " the program is working on: "+movieTitle + " at "+", ".join(str(t) for t in movieTheatres) + " for " +", ".join(movieDates), os.getenv("GOOGLEPASS"))
     print("regular email sent")
 
@@ -113,7 +124,7 @@ def insertMovie(movieTitle):
     movieTitles = wait.until(EC.presence_of_all_elements_located((By.CSS_SELECTOR, ".SelectMoviesDrawer_movieTitle__xUE23")))
     found = False
     for movie in movieTitles:
-        if movieTitle in movie.text:
+        if movieTitle == movie.text:
             print("\nmovie title found")
             wait.until(EC.element_to_be_clickable(movie))
             safeClick(movie)
@@ -123,6 +134,8 @@ def insertMovie(movieTitle):
         quit(movieTitle + " was not found.", "The movie does not exist.")
 
 def insertDate(movieDate):
+    if datetime.now() > datetime.strptime(movieDate, "%B %d, %Y"):
+        return
     buttons = wait.until(EC.presence_of_all_elements_located((By.CSS_SELECTOR, ".TicketModuleButton_button__gOEtJ"))) #buttons
     for button in buttons:
         if "select-date" in button.get_attribute("data-testid"):
@@ -200,13 +213,25 @@ def scrapeShowtimeIDs():
     global showtimeIDs
     wait.until(EC.presence_of_all_elements_located((By.CSS_SELECTOR, "[data-testid*='showtime-cta-vistaId-']")))
     time.sleep(3)
-    ids = []
-    showtimes = driver.find_elements(By.CSS_SELECTOR, "[data-testid*='showtime-cta-vistaId-']")
-    for showtime in showtimes:
-        showID = showtime.get_attribute("data-testid")
-        showIDfix = showID.replace("showtime-cta-vistaId-","")
-        ids.append(showIDfix)
-    return ids
+    for attempt in range(3):
+        try:
+            ids = []
+            showtimes = driver.find_elements(By.CSS_SELECTOR, "[data-testid*='showtime-cta-vistaId-']")
+            for showtime in showtimes:
+                exclude = False
+                for exTimes in excludeTimes:
+                    if exTimes.casefold() == showtime.text.casefold():
+                        exclude = True
+                        break
+                if not exclude:
+                    showID = showtime.get_attribute("data-testid")
+                    showIDfix = showID.replace("showtime-cta-vistaId-","")
+                    ids.append(showIDfix)
+            return ids
+        except StaleElementReferenceException:
+            print(f"Stale element in scrapeShowtimeIDs, retrying (attempt {attempt+1})")
+            time.sleep(0.5)
+    return []
 ## Claude code
 def waitForSeatAvailability(minCalls, quietPeriod, timeout):
     global driver
@@ -255,26 +280,6 @@ def checkShowtime(theatreID, showtimeID):
     #childElements = driver.find_elements(By.CSS_SELECTOR, "[class*='seat-'] > g.SeatElement_seatLinkButton__wxQzX")
     #allAvailable = True
     runDueToSeatMap = False
-    '''shortWait = WebDriverWait(driver, 1)
-    
-    end_time = time.time() + 1.5
-    prevViewBox = 0
-    try:
-        while time.time() < end_time:
-            shortWait.until(EC.presence_of_element_located((By.CSS_SELECTOR, ".SeatMapSvg_preview__qA6DG")))
-            renderedSeatMap = driver.find_element(By.CSS_SELECTOR, ".SeatMapSvg_preview__qA6DG")
-            viewBox = driver.execute_script("return arguments[0].getAttribute('viewBox');", renderedSeatMap)
-            if viewBox == prevViewBox and "1320 " not in viewBox:
-                runDueToSeatMap = True
-                break
-            prevViewBox = viewBox
-            time.sleep(0.1)
-    except TimeoutException:
-        print("Couldn't find non rendered seat map.")
-        #viewBox = None
-        runDueToSeatMap = True
-
-    #if "1320 " not in renderedSeatMap.get_attribute("viewBox"):'''
     got_data = waitForSeatAvailability(2, 0.6, 8)
     if not got_data:
         print("Never saw seat-availability response — falling back to sleep")
@@ -303,9 +308,17 @@ def checkShowtime(theatreID, showtimeID):
                             status = status.replace(typeEx, "")
                     for seatType in seatTypes:
                         status = status.replace(seatType.casefold(), "")
-                    for seatEx in excludeSeat:
-                        if seatEx.casefold() in status.casefold():
-                            exclude = True
+                    if not exclude:
+                        for seatEx in excludeSeat:
+                            if seatEx.casefold() in status.casefold():
+                                exclude = True
+                                break
+                    if not exclude:
+                        status = status.replace("   ", "")
+                        for specExSeat in specExcludeSeat:
+                            if specExSeat.casefold() == status.casefold():
+                                exclude = True
+                                break
                     if not exclude:
                         showtimeTime = driver.find_element(By.CSS_SELECTOR, ".MovieDetailsBlock_movieDateTime__WIyZX").text
                         showtimeTime = showtimeTime.replace("\n・\n", " - ")
