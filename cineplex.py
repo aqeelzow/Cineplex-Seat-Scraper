@@ -32,7 +32,8 @@ wait = WebDriverWait(driver, 20)
 
 
 
-
+emailKey = ""
+dictNum = 0
 availJsonPath = ""
 showFailure = False
 movieTitle = ""
@@ -67,7 +68,7 @@ availableJSON = []
 
 def setAvailableJSON(value):
     global availableJSON
-    availableJSON = value
+    availableJSON = {emailKey: {dictNum: [value]}}
 
 ## Claude code
 def safeClick(element):
@@ -421,8 +422,10 @@ while True:
 driverAlive = False
 
 def runAll(path, key, entry, pathToAvailJson, specExclSeats, exclTimes):
-    global driverAlive, runLock, movieTitle, movieTheatres, movieDates, filterList, excludeType, excludeSeat, recipients, availJsonPath
+    global driverAlive, runLock, movieTitle, movieTheatres, movieDates, filterList, excludeType, excludeSeat, recipients, availJsonPath, emailKey, dictNum
     movieTitle, movieTheatres, movieDates, filterList, excludeType, excludeSeat, recipients = loadInfo(path, key, entry, specExclSeats, exclTimes)
+    emailKey = key
+    dictNum = entry
     availJsonPath = pathToAvailJson
     driverAlive = True
     runLock = threading.Lock()
