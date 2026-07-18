@@ -33,4 +33,3 @@ def sendEmail(sender, recipients, subject, text, password):
         smtpServ.sendmail(sender, recipients, str(msg))
 load_dotenv()
 info = readInfo()
-sendEmail("realdynedl@gmail.com", ["realdynedl@gmail.com"], info[1], info[0], os.getenv("GOOGLEPASS"))
