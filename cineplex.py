@@ -15,16 +15,16 @@ from emailSend import readInfo, sendEmail
 from urllib3.exceptions import MaxRetryError
 from selenium.webdriver.chrome.options import Options
 import threading
-
+from helper import theatresDict as theatres, seatTypes
 
 # theatre id: name
-theatres = {
+'''theatres = {
     7408: "Cineplex Cinemas Vaughan",
     7420: "Cineplex Cinemas Mississauga Square One",
     7428: "Scotiabank Theatre Ottawa"
 }
 
-seatTypes = ["Wheelchair", "Standard", "Companion", "D-BOX*" ]
+seatTypes = ["Wheelchair", "Standard", "Companion", "D-BOX*" ]'''
 
 
 
@@ -39,7 +39,7 @@ wait = WebDriverWait(driver, 20)
 with open(os.path.join(script_dir, "form_data.json"), "r") as openFile:
     data = json.load(openFile)
 
-excludeType = ["Wheelchair", "Companion"]
+'''excludeType = ["Wheelchair", "Companion"]
 excludeSeat = ["AA", "BB", "CC", "DD", "EE", "A", "B", "C", "D", "E"]
 exclSeat = ["F", "G", "H", "I", "J"]
 times = []
@@ -55,11 +55,37 @@ showFailure = False
 
 movieTheatres = data["theatre_id"]
 filterList = data["filters"]
-movieDates = data["dates"]
+movieDates = data["dates"]'''
+
+exclSeat = ["F", "G", "H", "I", "J"]
+times = []
+excludeTimes = ["11:00 AM", "2:30 PM", "10:30 PM"]
+specExcludeSeat = []
+for i in range(1, 9):
+    for seat in exclSeat:
+        specExcludeSeat.append(seat+str(36-i))
+        specExcludeSeat.append(seat+str(i))
+#print(excludeSeat)
+showFailure = False
+
+key = "realdynedl@gmail.com"
+entry = 0
+
+movieTitle = data[key][entry]["movie"]
+movieTheatres = data[key][entry]["theatreID"]
+movieDates = data[key][entry]["date"]
+filterList = data[key][entry]["filter"]
+excludeType = data[key][entry]["excludeSeatType"]
+excludeSeat = data[key][entry]["excludeSeat"]
+recipients = data[key][entry]["recipients"]
+
 showtimeIDs = []
 availableShowtimes = []
 availableJSON = []
 
+def setAvailableJSON(value):
+    global availableJSON
+    availableJSON = value
 
 ## Claude code
 def safeClick(element):
@@ -81,13 +107,13 @@ def processAndSendEmail():
     global availableShowtimes
     info = readInfo()
     #sendEmail("realdynedl@gmail.com", ["falltureofficial@gmail.com", "sircody0101@gmail.com"], info[1], info[0], os.getenv("GOOGLEPASS"))
-    sendEmail("realdynedl@gmail.com", ["realdynedl@gmail.com"], info[1], info[0], os.getenv("GOOGLEPASS"))
+    sendEmail("realdynedl@gmail.com", recipients, info[1], info[0], os.getenv("GOOGLEPASS"))
     #sendEmail("darkdragon7511@gmail.com", ["realdynedl@gmail.com"], info[1], info[0], os.getenv("GOOGLEPASS"))
     availableShowtimes = []
 
 def regularEmail():
     info = readInfo()
-    sendEmail("realdynedl@gmail.com", ["realdynedl@gmail.com"], "Working: "+ datetime.now().strftime("%H:%M:%S"), "As of "+datetime.now().strftime("%B %d, %Y")+" at "+datetime.now().strftime("%H:%M:%S") + " the program is working on: "+movieTitle + " at "+", ".join(str(t) for t in movieTheatres) + " for " +", ".join(movieDates)+"\n\n"+info[0]+"\n"+info[1], os.getenv("GOOGLEPASS"))
+    sendEmail("realdynedl@gmail.com", recipients, "Working: "+ datetime.now().strftime("%H:%M:%S"), "As of "+datetime.now().strftime("%B %d, %Y")+" at "+datetime.now().strftime("%H:%M:%S") + " the program is working on: "+movieTitle + " at "+", ".join(str(t) for t in movieTheatres) + " for " +", ".join(movieDates)+"\n\n"+info[0]+"\n"+info[1], os.getenv("GOOGLEPASS"))
     #sendEmail("darkdragon7511@gmail.com", ["realdynedl@gmail.com"], "Working: "+ datetime.now().strftime("%H:%M:%S"), "As of "+datetime.now().strftime("%B %d, %Y")+" at "+datetime.now().strftime("%H:%M:%S") + " the program is working on: "+movieTitle + " at "+", ".join(str(t) for t in movieTheatres) + " for " +", ".join(movieDates), os.getenv("GOOGLEPASS"))
     print("regular email sent")
 
@@ -344,7 +370,7 @@ def reset():
     driver.switch_to.window(closeTab)
     driver.close()
     driver.switch_to.window(mainTab)
-driverAlive = True
+'''driverAlive = True
 run_lock = threading.Lock()
 def run():
     global availableJSON, wait, driverAlive, driver
@@ -400,4 +426,4 @@ schedule.every(5).seconds.do(run)
 schedule.every(20).minutes.do(regularEmail)
 while True:
     schedule.run_pending()
-    time.sleep(1)
+    time.sleep(1)'''
