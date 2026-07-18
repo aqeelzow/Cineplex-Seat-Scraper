@@ -2,7 +2,7 @@
   [{
     "movie": "The Odyssey",
     "theatreID": ["7428"],
-    "date": ["July 22, 2026"],
+    "date": ["August 30, 2026"],
     "filter": ["IMAX"],
     "excludeSeat": ["AA", "BB", "CC", "DD", "EE", "A", "B", "C", "D", "E"],
     "excludeSeatType": ["Wheelchair", "Companion"],

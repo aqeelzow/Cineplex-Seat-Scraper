@@ -17,14 +17,7 @@ from selenium.webdriver.chrome.options import Options
 import threading
 from helper import theatresDict as theatres, seatTypes
 
-# theatre id: name
-'''theatres = {
-    7408: "Cineplex Cinemas Vaughan",
-    7420: "Cineplex Cinemas Mississauga Square One",
-    7428: "Scotiabank Theatre Ottawa"
-}
 
-seatTypes = ["Wheelchair", "Standard", "Companion", "D-BOX*" ]'''
 
 
 
@@ -36,48 +29,37 @@ driver = webdriver.Chrome(options=options)
 load_dotenv()
 script_dir = os.path.dirname(os.path.abspath(__file__))
 wait = WebDriverWait(driver, 20)
-with open(os.path.join(script_dir, "form_data.json"), "r") as openFile:
-    data = json.load(openFile)
 
-'''excludeType = ["Wheelchair", "Companion"]
-excludeSeat = ["AA", "BB", "CC", "DD", "EE", "A", "B", "C", "D", "E"]
-exclSeat = ["F", "G", "H", "I", "J"]
-times = []
-excludeTimes = ["11:00 AM", "2:30 PM", "10:30 PM"]
-specExcludeSeat = []
-for i in range(1, 9):
-    for seat in exclSeat:
-        specExcludeSeat.append(seat+str(36-i))
-        specExcludeSeat.append(seat+str(i))
-print(excludeSeat)
-movieTitle = "The Odyssey"
+
+
+
+
 showFailure = False
-
-movieTheatres = data["theatre_id"]
-filterList = data["filters"]
-movieDates = data["dates"]'''
-
-exclSeat = ["F", "G", "H", "I", "J"]
-times = []
-excludeTimes = ["11:00 AM", "2:30 PM", "10:30 PM"]
+movieTitle = ""
+movieTheatres = []
+movieDates = []
+filterList = []
+excludeType = []
+excludeSeat = []
+recipients = []
 specExcludeSeat = []
-for i in range(1, 9):
-    for seat in exclSeat:
-        specExcludeSeat.append(seat+str(36-i))
-        specExcludeSeat.append(seat+str(i))
-#print(excludeSeat)
-showFailure = False
+excludeTimes = []
 
-key = "realdynedl@gmail.com"
-entry = 0
-
-movieTitle = data[key][entry]["movie"]
-movieTheatres = data[key][entry]["theatreID"]
-movieDates = data[key][entry]["date"]
-filterList = data[key][entry]["filter"]
-excludeType = data[key][entry]["excludeSeatType"]
-excludeSeat = data[key][entry]["excludeSeat"]
-recipients = data[key][entry]["recipients"]
+def loadInfo(path, key, entry, specificExclSeat, exclTimes):
+    global movieTitle, movieTheatres, movieDates, filterList, excludeType, \
+        excludeSeat, recipients, specExcludeSeat, excludeTimes
+    with open(path, "r") as openFile:
+        data = json.load(openFile)
+    movieTitle = data[key][entry]["movie"]
+    movieTheatres = data[key][entry]["theatreID"]
+    movieDates = data[key][entry]["date"]
+    filterList = data[key][entry]["filter"]
+    excludeType = data[key][entry]["excludeSeatType"]
+    excludeSeat = data[key][entry]["excludeSeat"]
+    recipients = data[key][entry]["recipients"]
+    specExcludeSeat = specificExclSeat
+    excludeTimes = exclTimes
+    return movieTitle, movieTheatres, movieDates, filterList, excludeType, excludeSeat, recipients
 
 showtimeIDs = []
 availableShowtimes = []
@@ -106,15 +88,12 @@ def writeToAvail(success):
 def processAndSendEmail():
     global availableShowtimes
     info = readInfo()
-    #sendEmail("realdynedl@gmail.com", ["falltureofficial@gmail.com", "sircody0101@gmail.com"], info[1], info[0], os.getenv("GOOGLEPASS"))
     sendEmail("realdynedl@gmail.com", recipients, info[1], info[0], os.getenv("GOOGLEPASS"))
-    #sendEmail("darkdragon7511@gmail.com", ["realdynedl@gmail.com"], info[1], info[0], os.getenv("GOOGLEPASS"))
     availableShowtimes = []
 
 def regularEmail():
     info = readInfo()
     sendEmail("realdynedl@gmail.com", recipients, "Working: "+ datetime.now().strftime("%H:%M:%S"), "As of "+datetime.now().strftime("%B %d, %Y")+" at "+datetime.now().strftime("%H:%M:%S") + " the program is working on: "+movieTitle + " at "+", ".join(str(t) for t in movieTheatres) + " for " +", ".join(movieDates)+"\n\n"+info[0]+"\n"+info[1], os.getenv("GOOGLEPASS"))
-    #sendEmail("darkdragon7511@gmail.com", ["realdynedl@gmail.com"], "Working: "+ datetime.now().strftime("%H:%M:%S"), "As of "+datetime.now().strftime("%B %d, %Y")+" at "+datetime.now().strftime("%H:%M:%S") + " the program is working on: "+movieTitle + " at "+", ".join(str(t) for t in movieTheatres) + " for " +", ".join(movieDates), os.getenv("GOOGLEPASS"))
     print("regular email sent")
 
 def quit(subject, bodyText):
@@ -158,10 +137,12 @@ def insertMovie(movieTitle):
             break
     if not found:
         quit(movieTitle + " was not found.", "The movie does not exist.")
+        return False
+    return True
 
 def insertDate(movieDate):
     if datetime.now() > datetime.strptime(movieDate, "%B %d, %Y"):
-        return
+        return False
     buttons = wait.until(EC.presence_of_all_elements_located((By.CSS_SELECTOR, ".TicketModuleButton_button__gOEtJ"))) #buttons
     for button in buttons:
         if "select-date" in button.get_attribute("data-testid"):
@@ -179,6 +160,8 @@ def insertDate(movieDate):
             break
     if not found:
         quit("No showtimes for " +movieTitle + " were found for "+movieDate+".", "The showtime does not exist.")
+        return False
+    return True
 
 
 def insertTheatre(movieTheatre, theatreID):
@@ -205,6 +188,8 @@ def insertTheatre(movieTheatre, theatreID):
             break
     if not found:
         quit(movieTheatre + " was not found.", "The theatre does not exist.")
+        return False
+    return True
 def filters():
     wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, ".ShowtimesContent_filterButton__biqZY")))
     safeClick(driver.find_element(By.CSS_SELECTOR, ".ShowtimesContent_filterButton__biqZY"))
@@ -231,8 +216,10 @@ def filters():
             continue
     if not foundOne:
         quit("No filters were found.", "Your selected filter(s) do not exist.")
+        return False
     wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, ".SelectFilterDrawer_fullWidth__q2yZQ")))
     safeClick(driver.find_element(By.CSS_SELECTOR, ".SelectFilterDrawer_fullWidth__q2yZQ"))
+    return True
 
 
 def scrapeShowtimeIDs():
@@ -427,3 +414,75 @@ schedule.every(20).minutes.do(regularEmail)
 while True:
     schedule.run_pending()
     time.sleep(1)'''
+
+
+
+
+driverAlive = False
+
+def runAll(path, key, entry, specExclSeats, exclTimes):
+    global driverAlive, runLock, movieTitle, movieTheatres, movieDates, filterList, excludeType, excludeSeat, recipients
+    movieTitle, movieTheatres, movieDates, filterList, excludeType, excludeSeat, recipients = loadInfo(path, key, entry, specExclSeats, exclTimes)
+    driverAlive = True
+    runLock = threading.Lock()
+    schedule.every(5).seconds.do(run)
+    schedule.every(20).minutes.do(regularEmail)
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
+
+def run():
+    global driverAlive, driver, wait
+    if not runLock.acquire(blocking=False):
+        print("Previous run still in progress, skipping this cycle")
+        return
+    try:
+        if not driverAlive:
+            #driver = webdriver.Chrome()
+            driver = webdriver.Chrome(options=options)
+            wait = WebDriverWait(driver, 20)
+            driverAlive = True
+        start()
+
+        if not insertMovie(movieTitle):
+            return
+        if len(filterList) != 0:
+            if not filters():
+                return
+        for date in movieDates:
+            if not insertDate(date):
+                return
+            for theatre in movieTheatres:
+                if not insertTheatre(theatres[theatre], int(theatre)):
+                    return
+                showtimeIDs = scrapeShowtimeIDs()
+                print(showtimeIDs)
+                if len(showtimeIDs) == 0:
+                    quit("No showtime exists for "+movieTitle, "Hang on tight! Hopefully more showtimes will arrive for " +movieTitle+".")
+                    return
+                    #writeToAvail(False)
+                else:
+                    for showtime in showtimeIDs:
+                        print(f"\n\n{theatres[theatre]}")
+                        checkShowtime(int(theatre), showtime)
+        if len(availableShowtimes) == 0:
+            setAvailableJSON(["No available seats for "+movieTitle, "Hang on tight! Hopefully more seats will arrive for " +movieTitle+"."])
+            writeToAvail(False)
+        elif len(availableShowtimes) == 1:
+            setAvailableJSON(["There is 1 available seat for " + movieTitle, availableShowtimes])
+            writeToAvail(True)
+        else:
+            setAvailableJSON(["There are " + str(len(availableShowtimes))+ " available seats for " + movieTitle, availableShowtimes])
+            writeToAvail(True)
+        reset()
+    except TimeoutException as e:
+        print(f"Timed out during run(): {e}")
+
+    except MaxRetryError as e:
+        print(f"Max retry error during run(): {e}")
+
+    finally:
+        runLock.release()
+
+
+
