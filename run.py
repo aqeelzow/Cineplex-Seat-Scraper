@@ -16,6 +16,6 @@ emailKey = "realdynedl@gmail.com"
 emailEntry = 0
 script_dir = os.path.dirname(os.path.abspath(__file__))
 pathToFile = os.path.join(script_dir, "form_data.json")
+pathToAvailJson = os.path.join(script_dir, "available.json")
 
-
-runAll(pathToFile, emailKey, emailEntry, specExcludeSeat, excludeTimes)
+runAll(pathToFile, emailKey, emailEntry, pathToAvailJson, specExcludeSeat, excludeTimes)

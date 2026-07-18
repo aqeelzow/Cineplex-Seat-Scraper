@@ -33,7 +33,7 @@ wait = WebDriverWait(driver, 20)
 
 
 
-
+availJsonPath = ""
 showFailure = False
 movieTitle = ""
 movieTheatres = []
@@ -77,10 +77,10 @@ def safeClick(element):
     except ElementClickInterceptedException:
         driver.execute_script("arguments[0].click();", element)
 
-def writeToAvail(success):
+def writeToAvail(success, path):
     global availableJSON, showFailure
     availableJSON.append(datetime.now().strftime("%H:%M:%S"))
-    with open(os.path.join(script_dir, "available.json"), "w") as writeFile:
+    with open(path, "w") as writeFile:
         json.dump(availableJSON, writeFile)
     if showFailure and not success or success:
         processAndSendEmail()
@@ -88,12 +88,12 @@ def writeToAvail(success):
 def processAndSendEmail():
     global availableShowtimes
     info = readInfo()
-    sendEmail("realdynedl@gmail.com", recipients, info[1], info[0], os.getenv("GOOGLEPASS"))
+    sendEmail(os.getenv("senderEmail"), recipients, info[1], info[0], os.getenv("GOOGLEPASS"))
     availableShowtimes = []
 
 def regularEmail():
     info = readInfo()
-    sendEmail("realdynedl@gmail.com", recipients, "Working: "+ datetime.now().strftime("%H:%M:%S"), "As of "+datetime.now().strftime("%B %d, %Y")+" at "+datetime.now().strftime("%H:%M:%S") + " the program is working on: "+movieTitle + " at "+", ".join(str(t) for t in movieTheatres) + " for " +", ".join(movieDates)+"\n\n"+info[0]+"\n"+info[1], os.getenv("GOOGLEPASS"))
+    sendEmail(os.getenv("senderEmail"), recipients, "Working: "+ datetime.now().strftime("%H:%M:%S"), "As of "+datetime.now().strftime("%B %d, %Y")+" at "+datetime.now().strftime("%H:%M:%S") + " the program is working on: "+movieTitle + " at "+", ".join(str(t) for t in movieTheatres) + " for " +", ".join(movieDates)+"\n\n"+info[0]+"\n"+info[1], os.getenv("GOOGLEPASS"))
     print("regular email sent")
 
 def quit(subject, bodyText):
@@ -101,7 +101,7 @@ def quit(subject, bodyText):
     availableJSON = [subject, bodyText]
     driver.quit()
     driverAlive = False
-    writeToAvail(False)
+    writeToAvail(False, availJsonPath)
 def start():
     driver.get("https://www.cineplex.com/?openTM=true")
     try:
@@ -420,9 +420,10 @@ while True:
 
 driverAlive = False
 
-def runAll(path, key, entry, specExclSeats, exclTimes):
-    global driverAlive, runLock, movieTitle, movieTheatres, movieDates, filterList, excludeType, excludeSeat, recipients
+def runAll(path, key, entry, pathToAvailJson, specExclSeats, exclTimes):
+    global driverAlive, runLock, movieTitle, movieTheatres, movieDates, filterList, excludeType, excludeSeat, recipients, availJsonPath
     movieTitle, movieTheatres, movieDates, filterList, excludeType, excludeSeat, recipients = loadInfo(path, key, entry, specExclSeats, exclTimes)
+    availJsonPath = pathToAvailJson
     driverAlive = True
     runLock = threading.Lock()
     schedule.every(5).seconds.do(run)
@@ -467,13 +468,13 @@ def run():
                         checkShowtime(int(theatre), showtime)
         if len(availableShowtimes) == 0:
             setAvailableJSON(["No available seats for "+movieTitle, "Hang on tight! Hopefully more seats will arrive for " +movieTitle+"."])
-            writeToAvail(False)
+            writeToAvail(False, availJsonPath)
         elif len(availableShowtimes) == 1:
             setAvailableJSON(["There is 1 available seat for " + movieTitle, availableShowtimes])
-            writeToAvail(True)
+            writeToAvail(True, availJsonPath)
         else:
             setAvailableJSON(["There are " + str(len(availableShowtimes))+ " available seats for " + movieTitle, availableShowtimes])
-            writeToAvail(True)
+            writeToAvail(True, availJsonPath)
         reset()
     except TimeoutException as e:
         print(f"Timed out during run(): {e}")
