@@ -64,11 +64,12 @@ def loadInfo(path, key, entry, specificExclSeat, exclTimes):
 
 showtimeIDs = []
 availableShowtimes = []
-availableJSON = []
+availableJSON = {}
 
 def setAvailableJSON(value):
     global availableJSON
-    availableJSON = {emailKey: {dictNum: [value]}}
+    availableJSON.setdefault(emailKey, {})
+    availableJSON[emailKey][dictNum] = value
 
 ## Claude code
 def safeClick(element):
@@ -80,7 +81,7 @@ def safeClick(element):
 
 def writeToAvail(success, path):
     global availableJSON, showFailure
-    availableJSON.append(datetime.now().strftime("%H:%M:%S"))
+    availableJSON[emailKey][dictNum].append(datetime.now().strftime("%H:%M:%S"))
     with open(path, "w") as writeFile:
         json.dump(availableJSON, writeFile)
     if showFailure and not success or success:
