@@ -454,7 +454,7 @@ def run():
             if not insertDate(date):
                 return
             for theatre in movieTheatres:
-                if not insertTheatre(theatres[theatre], int(theatre)):
+                if not insertTheatre(theatres[theatre], theatre):
                     return
                 showtimeIDs = scrapeShowtimeIDs()
                 print(showtimeIDs)
@@ -465,7 +465,7 @@ def run():
                 else:
                     for showtime in showtimeIDs:
                         print(f"\n\n{theatres[theatre]}")
-                        checkShowtime(int(theatre), showtime)
+                        checkShowtime(theatre, showtime)
         if len(availableShowtimes) == 0:
             setAvailableJSON(["No available seats for "+movieTitle, "Hang on tight! Hopefully more seats will arrive for " +movieTitle+"."])
             writeToAvail(False, availJsonPath)
