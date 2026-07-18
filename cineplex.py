@@ -11,11 +11,11 @@ import schedule
 import time
 from datetime import datetime
 from dotenv import load_dotenv
-from emailSend import readInfo, sendEmail
+from .emailSend import readInfo, sendEmail
 from urllib3.exceptions import MaxRetryError
 from selenium.webdriver.chrome.options import Options
 import threading
-from helper import theatresDict as theatres, seatTypes
+from .helper import theatresDict as theatres, seatTypes
 
 
 
