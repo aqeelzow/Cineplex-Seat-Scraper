@@ -32,4 +32,3 @@ def sendEmail(sender, recipients, subject, text, password):
         smtpServ.login(sender, password)
         smtpServ.sendmail(sender, recipients, str(msg))
 load_dotenv()
-info = readInfo()
