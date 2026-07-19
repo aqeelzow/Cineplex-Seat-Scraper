@@ -7,19 +7,19 @@ from dotenv import load_dotenv
 import schedule
 import time
 
-def readInfo():
+def readInfo(emailKey, dictNum):
     showtime = []
     script_dir = os.path.dirname(os.path.abspath(__file__))
     #passwrd = os.getenv("appPass")
     with open(os.path.join(script_dir, "available.json"), "r") as readFile:
         data = json.load(readFile)
-    timestamps = "\n\nProcessed at: " + data[2] + "\nSent at: " + datetime.now().strftime("%H:%M:%S")
-    if type(data[1]) == list:
-        showtime.append("\n".join(data[1]) + timestamps)
+    timestamps = "\n\nProcessed at: " + data[emailKey][dictNum][2] + "\nSent at: " + datetime.now().strftime("%H:%M:%S")
+    if type(data[emailKey][dictNum][1]) == list:
+        showtime.append("\n".join(data[emailKey][dictNum][1]) + timestamps)
     else:
-        showtime.append((data[1]) + timestamps)
-    showtime.append(data[0])
-    print(data)
+        showtime.append((data[emailKey][dictNum][1]) + timestamps)
+    showtime.append(data[emailKey][dictNum][0])
+    print(data[emailKey][dictNum])
     return showtime
 
 

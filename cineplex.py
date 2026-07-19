@@ -89,7 +89,7 @@ def writeToAvail(success, path):
 
 def processAndSendEmail():
     global availableShowtimes
-    info = readInfo()
+    info = readInfo(emailKey, dictNum)
     sendEmail(os.getenv("senderEmail"), recipients, info[1], info[0], os.getenv("GOOGLEPASS"))
     availableShowtimes = []
 
