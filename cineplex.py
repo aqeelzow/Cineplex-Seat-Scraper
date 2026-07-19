@@ -100,7 +100,7 @@ def regularEmail():
 
 def quit(subject, bodyText):
     global availableJSON, driverAlive
-    availableJSON[emailKey][dictNum] = [subject, bodyText]
+    setAvailableJSON([subject, bodyText])
     driver.quit()
     driverAlive = False
     writeToAvail(False, availJsonPath)
