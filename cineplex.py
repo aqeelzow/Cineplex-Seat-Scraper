@@ -81,7 +81,7 @@ def safeClick(element):
 
 def writeToAvail(success, path):
     global availableJSON, showFailure
-    availableJSON[emailKey][dictNum].append(datetime.now().strftime("%H:%M:%S"))
+    availableJSON[emailKey][dictNum].append((datetime.now).strftime("%H:%M:%S %Y-%d-%m"))
     with open(path, "w") as writeFile:
         json.dump(availableJSON, writeFile)
     if showFailure and not success or success:
