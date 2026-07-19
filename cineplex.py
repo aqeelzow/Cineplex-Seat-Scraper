@@ -94,7 +94,7 @@ def processAndSendEmail():
     availableShowtimes = []
 
 def regularEmail():
-    info = readInfo()
+    info = readInfo(emailKey, dictNum)
     sendEmail(os.getenv("senderEmail"), recipients, "Working: "+ datetime.now().strftime("%H:%M:%S"), "As of "+datetime.now().strftime("%B %d, %Y")+" at "+datetime.now().strftime("%H:%M:%S") + " the program is working on: "+movieTitle + " at "+", ".join(str(t) for t in movieTheatres) + " for " +", ".join(movieDates)+"\n\n"+info[0]+"\n"+info[1], os.getenv("GOOGLEPASS"))
     print("regular email sent")
 
