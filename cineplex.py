@@ -422,7 +422,7 @@ while True:
 
 driverAlive = False
 
-def runAll(path, key, entry, pathToAvailJson, specExclSeats, exclTimes):
+def runAll(path, key, entry, pathToAvailJson, stopEvent, specExclSeats, exclTimes):
     global driverAlive, runLock, movieTitle, movieTheatres, movieDates, filterList, excludeType, excludeSeat, recipients, availJsonPath, emailKey, dictNum
     movieTitle, movieTheatres, movieDates, filterList, excludeType, excludeSeat, recipients = loadInfo(path, key, entry, specExclSeats, exclTimes)
     emailKey = key
@@ -432,7 +432,7 @@ def runAll(path, key, entry, pathToAvailJson, specExclSeats, exclTimes):
     runLock = threading.Lock()
     schedule.every(5).seconds.do(run)
     schedule.every(20).minutes.do(regularEmail)
-    while True:
+    while not stopEvent.is_set():
         schedule.run_pending()
         time.sleep(1)
 
