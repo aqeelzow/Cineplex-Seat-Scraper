@@ -23,8 +23,9 @@ from .helper import theatresDict as theatres, seatTypes
 
 # Initialize the driver
 #driver = webdriver.Chrome()
-
-#driver = webdriver.Chrome(options=options)
+options = Options()
+options.set_capability("goog:loggingPrefs", {"performance": "ALL"})
+driver = webdriver.Chrome(options=options)
 load_dotenv()
 script_dir = os.path.dirname(os.path.abspath(__file__))
 wait = WebDriverWait(driver, 20)
@@ -421,12 +422,11 @@ while True:
 
 driverAlive = False
 
-def runAll(path, key, entry, pathToAvailJson, stopEvent, driv, specExclSeats, exclTimes):
-    global driverAlive, runLock, movieTitle, movieTheatres, movieDates, filterList, excludeType, excludeSeat, recipients, availJsonPath, emailKey, dictNum, driver
+def runAll(path, key, entry, pathToAvailJson, stopEvent, specExclSeats, exclTimes):
+    global driverAlive, runLock, movieTitle, movieTheatres, movieDates, filterList, excludeType, excludeSeat, recipients, availJsonPath, emailKey, dictNum
     movieTitle, movieTheatres, movieDates, filterList, excludeType, excludeSeat, recipients = loadInfo(path, key, entry, specExclSeats, exclTimes)
     emailKey = key
     dictNum = entry
-    driver = driv
     availJsonPath = pathToAvailJson
     driverAlive = True
     runLock = threading.Lock()
