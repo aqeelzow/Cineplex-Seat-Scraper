@@ -10,9 +10,14 @@ import time
 def readInfo(emailKey, dictNum):
     showtime = []
     script_dir = os.path.dirname(os.path.abspath(__file__))
+    dictNum = str(dictNum)
     #passwrd = os.getenv("appPass")
     with open(os.path.join(script_dir, "available.json"), "r") as readFile:
         data = json.load(readFile)
+    try:
+        entry = data[emailKey][dictNum]
+    except KeyError:
+        return ["No results yet.", "Not run yet"]
     timestamps = "\n\nProcessed at: " + data[emailKey][dictNum][2] + "\nSent at: " + datetime.now().strftime("%H:%M:%S")
     if type(data[emailKey][dictNum][1]) == list:
         showtime.append("\n".join(data[emailKey][dictNum][1]) + timestamps)
