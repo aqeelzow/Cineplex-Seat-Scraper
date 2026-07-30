@@ -1,14 +1,14 @@
 import os
 from cineplex import runAll
 
-exclSeat = ["F", "G", "H", "I", "J"]
+exclSeat = []
 times = []
-excludeTimes = ["11:00 AM", "2:30 PM", "10:30 PM"]
+excludeTimes = []
 specExcludeSeat = []
-for i in range(1, 9):
+'''for i in range(1, 9):
     for seat in exclSeat:
         specExcludeSeat.append(seat+str(36-i))
-        specExcludeSeat.append(seat+str(i))
+        specExcludeSeat.append(seat+str(i))'''
 print(specExcludeSeat)
 
 

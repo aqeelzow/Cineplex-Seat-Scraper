@@ -429,7 +429,11 @@ def runAll(path, key, entry, pathToAvailJson, specExclSeats, exclTimes):
     schedule.every(5).seconds.do(run)
     schedule.every(20).minutes.do(regularEmail)
     while True:
-        schedule.run_pending()
+        try:
+            schedule.run_pending()
+        except Exception as e:
+            print(f"Unexpected error in scheduler loop: {e}")
+            driverAlive = False
         time.sleep(1)
 
 def run():
@@ -454,7 +458,7 @@ def run():
             if not insertDate(date):
                 return
             for theatre in movieTheatres:
-                if not insertTheatre(theatres[theatre], int(theatre)):
+                if not insertTheatre(theatres[theatre], theatre):
                     return
                 showtimeIDs = scrapeShowtimeIDs()
                 print(showtimeIDs)
@@ -465,7 +469,7 @@ def run():
                 else:
                     for showtime in showtimeIDs:
                         print(f"\n\n{theatres[theatre]}")
-                        checkShowtime(int(theatre), showtime)
+                        checkShowtime(theatre, showtime)
         if len(availableShowtimes) == 0:
             setAvailableJSON(["No available seats for "+movieTitle, "Hang on tight! Hopefully more seats will arrive for " +movieTitle+"."])
             writeToAvail(False, availJsonPath)

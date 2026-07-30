@@ -1,10 +1,10 @@
 {"realdynedl@gmail.com":
   [{
     "movie": "The Odyssey",
-    "theatreID": ["7428"],
-    "date": ["July 22, 2026"],
-    "filter": ["IMAX"],
-    "excludeSeat": ["AA", "BB", "CC", "DD", "EE", "A", "B", "C", "D", "E"],
+    "theatreID": ["7408", "7420"],
+    "date": ["August 2, 2026"],
+    "filter": ["IMAX 70mm"],
+    "excludeSeat": [],
     "excludeSeatType": ["Wheelchair", "Companion"],
     "recipients": ["realdynedl@gmail.com"]
   }]
