@@ -1,4 +1,4 @@
-{"realdynedl@gmail.com":
+{"your_email@gmail.com":
   [{
     "movie": "The Odyssey",
     "theatreID": ["7408", "7420"],
@@ -6,6 +6,6 @@
     "filter": ["IMAX 70mm"],
     "excludeSeat": [],
     "excludeSeatType": ["Wheelchair", "Companion"],
-    "recipients": ["realdynedl@gmail.com"]
+    "recipients": ["your_email@gmail.com"]
   }]
 }
