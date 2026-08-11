@@ -25,6 +25,8 @@ from helper import theatresDict as theatres, seatTypes
 #driver = webdriver.Chrome()
 options = Options()
 options.set_capability("goog:loggingPrefs", {"performance": "ALL"})
+options.add_argument("--headless=new")
+options.add_argument("--window-size=1920,1080")
 driver = webdriver.Chrome(options=options)
 load_dotenv()
 script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -110,15 +112,7 @@ def start():
     except TimeoutException:
         pass
         print("passing timeout exception")
-    ''' if the random pop up shows up where it doesnt work
-    try:
-        elements = driver.find_elements(By.CSS_SELECTOR, "#onetrust-accept-btn-handler")
-        if len(elements) > 0:
-            driver.refresh()
-    except TimeoutException:
-        pass
-        print("passing timeout exception")  
-    '''
+
 def insertMovie(movieTitle):
     buttons = wait.until(EC.presence_of_all_elements_located((By.CSS_SELECTOR, ".TicketModuleButton_button__gOEtJ"))) #buttons
     for button in buttons:
@@ -193,14 +187,9 @@ def insertTheatre(movieTheatre, theatreID):
 def filters():
     wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, ".ShowtimesContent_filterButton__biqZY")))
     safeClick(driver.find_element(By.CSS_SELECTOR, ".ShowtimesContent_filterButton__biqZY"))
-
-    ## Claude code
-    #wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, ".LoadingAnimation_container__nRpj6")))
-    #wait.until(EC.invisibility_of_element_located((By.CSS_SELECTOR, ".LoadingAnimation_container__nRpj6")))
     wait.until(EC.presence_of_all_elements_located((By.CSS_SELECTOR, ".Checkbox_hover-row__bVtwf")))
     time.sleep(1)
     movieFilters = driver.find_elements(By.CSS_SELECTOR, ".Checkbox_hover-row__bVtwf")
-    #movieFilters = wait.until(EC.presence_of_all_elements_located((By.CSS_SELECTOR, ".Checkbox_hover-row__bVtwf")))
     foundOne = False
     for filt in filterList:
         found = False
@@ -287,11 +276,7 @@ def checkShowtime(theatreID, showtimeID):
     url = f"https://www.cineplex.com/ticketing/preview?theatreId={theatreID}&showtimeId={showtimeID}&dbox=false"
     driver.get(url)
 
-    # Locate a single element
     wait.until(EC.presence_of_all_elements_located((By.CSS_SELECTOR, "[class*='seat-'] > g.SeatElement_seatLinkButton__wxQzX")))
-    #time.sleep(1)
-    #childElements = driver.find_elements(By.CSS_SELECTOR, "[class*='seat-'] > g.SeatElement_seatLinkButton__wxQzX")
-    #allAvailable = True
     runDueToSeatMap = False
     got_data = waitForSeatAvailability(2, 0.6, 8)
     if not got_data:
@@ -337,10 +322,6 @@ def checkShowtime(theatreID, showtimeID):
                         showtimeTime = showtimeTime.replace("\n・\n", " - ")
                         availableShowtimes.append(showtimeTime + ": " + str(element.get_attribute("aria-label")) + " at " + theatres[theatreID] + " - " + url+"\n")
                         print("added to availables")
-                '''else:
-                    availableJSON = ["No seats were found.", "That's odd, we couldn't find any seats."]
-                    driver.quit()
-                    writeToAvail()'''
 
                     #print(element.get_attribute("aria-label"))
             except StaleElementReferenceException:
@@ -357,66 +338,6 @@ def reset():
     driver.switch_to.window(closeTab)
     driver.close()
     driver.switch_to.window(mainTab)
-'''driverAlive = True
-run_lock = threading.Lock()
-def run():
-    global availableJSON, wait, driverAlive, driver
-    if not run_lock.acquire(blocking=False):
-        print("Previous run still in progress, skipping this cycle")
-        return
-    try:
-        if not driverAlive:
-            #driver = webdriver.Chrome()
-            driver = webdriver.Chrome(options=options)
-            wait = WebDriverWait(driver, 20)
-            driverAlive = True
-        start()
-
-        insertMovie(movieTitle)
-        if len(filterList) != 0:
-            filters()
-        for date in movieDates:
-            insertDate(date)
-            for theatre in movieTheatres:
-                insertTheatre(theatres[theatre], theatre)
-                showtimeIDs = scrapeShowtimeIDs()
-                print(showtimeIDs)
-                if len(showtimeIDs) == 0:
-                    quit("No showtime exists for "+movieTitle, "Hang on tight! Hopefully more showtimes will arrive for " +movieTitle+".")
-                    return
-                    #writeToAvail(False)
-                else:
-                    for showtime in showtimeIDs:
-                        print(f"\n\n{theatres[theatre]}")
-                        checkShowtime(theatre, showtime)
-        if len(availableShowtimes) == 0:
-            availableJSON = ["No available seats for "+movieTitle, "Hang on tight! Hopefully more seats will arrive for " +movieTitle+"."]
-            writeToAvail(False)
-        elif len(availableShowtimes) == 1:
-            availableJSON = ["There is 1 available seat for " + movieTitle, availableShowtimes]
-            writeToAvail(True)
-        else:
-            availableJSON = ["There are " + str(len(availableShowtimes))+ " available seats for " + movieTitle, availableShowtimes]
-            writeToAvail(True)
-        reset()
-    except TimeoutException as e:
-        print(f"Timed out during run(): {e}")
-
-    except MaxRetryError as e:
-        print(f"Max retry error during run(): {e}")
-
-    finally:
-        run_lock.release()
-
-
-schedule.every(5).seconds.do(run)
-schedule.every(20).minutes.do(regularEmail)
-while True:
-    schedule.run_pending()
-    time.sleep(1)'''
-
-
-
 
 driverAlive = False
 
