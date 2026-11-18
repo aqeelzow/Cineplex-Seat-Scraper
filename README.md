@@ -6,6 +6,8 @@ when matching seats are found.
 
 ![The scraper picking the movie, theatre and filter on Cineplex.com, then checking each showtime's seat map](docs/images/demo.gif)
 
+Cineplex Seat Scraper runs headless by default. Above is a non-headless visual of what the scraper actually does in real time.
+
 ## How it works
 
 - `run.py` is the entry point. It asks what you're looking for (or offers to
@@ -49,8 +51,6 @@ when matching seats are found.
 ## Your search
 
 `run.py` asks for each setting in the terminal:
-
-Cineplex Seat Scraper runs headless by default. Below is a non-headless visual of what the scraper actually does in real time.
 
 ![Answering the setup questions in the terminal](docs/images/input.png)
 
