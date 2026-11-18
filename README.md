@@ -50,16 +50,17 @@ when matching seats are found.
 
 `run.py` asks for each setting in the terminal:
 
+Cineplex Seat Scraper runs headless by default. Below is a non-headless visual of what the scraper actually does in real time.
 ![Answering the setup questions in the terminal](docs/images/input.png)
 
 | Question          | Example                     | Notes |
 |-------------------|-----------------------------|-------|
 | Email             | `you@gmail.com`             | Where notifications are sent. |
 | Movie title       | `Dune: Part Three`          | Must exactly match the title as listed on Cineplex.com. |
-| Theatre IDs       | `7420, 7408`                | Comma separated. See `theatresDict` in `helper.py` for the IDs. |
+| Theatre IDs       | `7420`                      | Comma separated. See `theatresDict` in `helper.py` for the IDs. |
 | Dates             | `December 25, 2026`         | Format: `Month D, YYYY`. Separate multiple dates with `;` (each date already contains a comma). |
 | Filters           | `IMAX 70mm`                 | Cineplex format filters (e.g. `IMAX`, `VIP`, `Recliner`). Leave blank for none. |
-| Rows to skip      | `A, B, C`                   | Seat row letters to exclude. Leave blank for none. |
+| Rows to skip      | `A, B, C, D, E`                   | Seat row letters to exclude. Leave blank for none. |
 | Seat types to skip| `Wheelchair, Companion`     | Seat categories to exclude (see `seatTypes` in `helper.py`). Leave blank for none. |
 
 Your answers are saved to `form_data.json`:
