@@ -51,6 +51,7 @@ when matching seats are found.
 `run.py` asks for each setting in the terminal:
 
 Cineplex Seat Scraper runs headless by default. Below is a non-headless visual of what the scraper actually does in real time.
+
 ![Answering the setup questions in the terminal](docs/images/input.png)
 
 | Question          | Example                     | Notes |
