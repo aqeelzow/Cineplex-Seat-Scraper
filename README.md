@@ -90,6 +90,14 @@ For example, when one seat matches:
 `emailSend.py` reads this file to compose the notification email. Like
 `form_data.json`, it's in `.gitignore`.
 
+## Notification email
+
+When seats match, the first item in `available.json` becomes the subject and
+the seat list becomes the body, followed by when the seats were found and
+when the email was sent:
+
+![Notification email for one available seat at Cineplex Cinemas Mississauga Square One](docs/images/email.png)
+
 ## Running headless
 
 Chrome runs headless by default (`--headless=new` in `cineplex.py`'s Chrome
